@@ -11,6 +11,8 @@ import Pagination from '@/components/Pagination';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { exportToCSV, formatDateTimeForCSV } from '@/lib/exportCSV';
 import { useRouter } from 'next/navigation';
+import ImageModal from '@/components/ImageModal';
+import Image from 'next/image';
 
 export default function MedicinesPage() {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
@@ -21,6 +23,7 @@ export default function MedicinesPage() {
   const [stockFilter, setStockFilter] = useState<string>('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null);
+  const [viewImageMedicine, setViewImageMedicine] = useState<Medicine | null>(null);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -133,6 +136,36 @@ export default function MedicinesPage() {
 
   const columns: Column<Medicine>[] = [
     {
+      key: 'image_url',
+      label: 'Image',
+      render: (med) => (
+        <div 
+          className="relative w-12 h-12 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border border-gray-100 bg-white"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (med.image_url) {
+              setViewImageMedicine(med);
+            }
+          }}
+        >
+          {med.image_url ? (
+            <Image
+              src={med.image_url}
+              alt={med.name}
+              fill
+              className="object-cover"
+              sizes="48px"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-50 flex items-center justify-center">
+              <Package className="w-5 h-5 text-gray-300" />
+            </div>
+          )}
+        </div>
+      ),
+      sortable: false
+    },
+    {
       key: 'name',
       label: 'Medicine Name',
       render: (med) => (
@@ -205,13 +238,22 @@ export default function MedicinesPage() {
           <h1 className="text-3xl font-bold gradient-text">Medicines & Products</h1>
           <p className="text-gray-600 mt-1">Manage marketplace inventory</p>
         </div>
-        <button
-          onClick={handleExport}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-lg hover:shadow-lg transition-all"
-        >
-          <Download className="h-5 w-5" />
-          Export CSV
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => router.push('/dashboard/marketplace/add')}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 hover:shadow-lg transition-all"
+          >
+            <Plus className="h-5 w-5" />
+            Add Medicine
+          </button>
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-lg hover:shadow-lg transition-all"
+          >
+            <Download className="h-5 w-5" />
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -303,6 +345,15 @@ export default function MedicinesPage() {
           itemsPerPage={itemsPerPage}
           onPageChange={setCurrentPage}
           onItemsPerPageChange={setItemsPerPage}
+        />
+      )}
+
+      {/* Image Modal */}
+      {viewImageMedicine && viewImageMedicine.image_url && (
+        <ImageModal
+          imageUrl={viewImageMedicine.image_url}
+          name={viewImageMedicine.name}
+          onClose={() => setViewImageMedicine(null)}
         />
       )}
 
