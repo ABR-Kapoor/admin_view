@@ -77,7 +77,7 @@ export default function OrderDetailsPage() {
       if (error) throw error;
       
       setStatus(newStatus);
-      setOrder(prev => prev ? { ...prev, status: newStatus } : null);
+      setOrder(prev => prev ? { ...prev, status: newStatus as OrderDetails['status'] } : null);
       
     } catch (error) {
       console.error('Error updating status:', error);
