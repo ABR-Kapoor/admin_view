@@ -1,84 +1,141 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
-  UserCog,
   Users,
   Building2,
+  PieChart,
+  Settings,
+  LogOut,
+  CreditCard,
   ShoppingCart,
   Truck,
   Calendar,
   FileText,
-  CreditCard,
-  Package,
+  Package
 } from 'lucide-react';
 
 export default function Sidebar() {
   const pathname = usePathname();
 
-  const navigation = [
+  const mainMenu = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Doctors', href: '/dashboard/doctors', icon: UserCog },
-    { name: 'Patients', href: '/dashboard/patients', icon: Users },
-    { name: 'Clinics', href: '/dashboard/clinics', icon: Building2 },
-    { name: 'Marketplace', href: '/dashboard/marketplace', icon: ShoppingCart },
-    { name: 'Delivery Boys', href: '/dashboard/delivery-boys', icon: Truck },
-    { name: 'Appointments', href: '/dashboard/appointments', icon: Calendar },
-    { name: 'Prescriptions', href: '/dashboard/prescriptions', icon: FileText },
-    { name: 'Orders', href: '/dashboard/orders', icon: Package },
+    { name: 'Users', href: '/dashboard/patients', icon: Users },
     { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
+    { name: 'Statistics', href: '/dashboard/analytics', icon: PieChart },
+  ];
+
+  const teams = [
+    { name: 'Doctors', href: '/dashboard/doctors', color: 'bg-orange-400' },
+    { name: 'Clinics', href: '/dashboard/clinics', color: 'bg-purple-500' },
+    { name: 'Delivery', href: '/dashboard/delivery-boys', color: 'bg-blue-500' },
+  ];
+
+  const otherMenu = [
+     { name: 'Appointments', href: '/dashboard/appointments', icon: Calendar },
+     { name: 'Prescriptions', href: '/dashboard/prescriptions', icon: FileText },
+     { name: 'Orders', href: '/dashboard/orders', icon: Package },
+     { name: 'Marketplace', href: '/dashboard/marketplace', icon: ShoppingCart },
   ];
 
   return (
-    <aside className="w-64 glass border-r border-emerald-200/50 min-h-screen sticky top-0 flex flex-col shadow-xl">
+    <aside className="w-64 bg-white min-h-screen sticky top-0 flex flex-col font-sans border-r border-gray-100">
       {/* Logo */}
-      <div className="p-6 border-b border-emerald-200/50">
-        <Link href="/dashboard" className="flex items-center space-x-2">
-          <img src="/Logos/logo_transparent.png" alt="AuraSutra" className="h-12" />
-          <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent" style={{ fontFamily: 'Alatsi, sans-serif' }}>
-            AuraSutra
-          </span>
-        </Link>
-        <p className="text-xs text-emerald-600 font-semibold mt-2 ml-14">Admin Panel</p>
+      <div className="p-8 pb-4 flex items-center gap-3">
+        <Image
+          src="/images/logos/logo_transparent.png"
+          alt="AuraSutra Logo"
+          width={40}
+          height={40}
+          className="w-10 h-10 object-contain"
+          priority
+        />
+        <span className="text-2xl font-bold text-gray-800 tracking-tight">AuraSutra</span>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href;
-          const Icon = item.icon;
-          
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`
-                flex items-center space-x-3 px-4 py-3 rounded-xl smooth-transition group
-                ${isActive 
-                  ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/30' 
-                  : 'text-gray-700 hover:bg-emerald-50/80 hover:text-emerald-700'
-                }
-              `}
-            >
-              <Icon className={`w-5 h-5 group-hover:scale-110 smooth-transition ${isActive ? 'animate-pulse-green' : ''}`} />
-              <span className="font-medium text-sm">{item.name}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Footer */}
-      <div className="p-4 border-t border-emerald-200/50 glass-dark">
-        <div className="text-center">
-          <p className="text-xs text-emerald-700 font-semibold">
-            Admin Dashboard v1.0
-          </p>
-          <p className="text-xs text-emerald-600 mt-1">
-            Powered by AuraSutra
-          </p>
+      {/* Main Menu */}
+      <div className="flex-1 px-6 py-4 overflow-y-auto">
+        <div className="mb-8">
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-2">Main Menu</h3>
+          <nav className="space-y-1">
+            {mainMenu.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`
+                    flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all duration-200
+                    ${isActive 
+                      ? 'bg-gray-100/80 text-gray-900 font-semibold shadow-sm' 
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                    }
+                  `}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-gray-900' : 'text-gray-400'}`} />
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
         </div>
+        
+        <div className="mb-8">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-2">Management</h3>
+             <nav className="space-y-1">
+            {otherMenu.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`
+                    flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all duration-200
+                    ${isActive 
+                      ? 'bg-gray-100/80 text-gray-900 font-semibold shadow-sm' 
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                    }
+                  `}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-gray-900' : 'text-gray-400'}`} />
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Teams Section */}
+        <div>
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-2">Teams</h3>
+          <nav className="space-y-1">
+            {teams.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+              >
+                <div className={`w-2 h-2 rounded-full ${item.color}`} />
+                <span className="font-medium text-sm">{item.name}</span>
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {/* Footer / Settings */}
+      <div className="p-6">
+        <nav className="space-y-1">
+          <button className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors">
+            <LogOut className="w-5 h-5" />
+            <span className="font-medium text-sm">Log Out</span>
+          </button>
+        </nav>
       </div>
     </aside>
   );
