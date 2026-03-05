@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Download, Filter, Package, Plus } from 'lucide-react';
+import { Download, Filter, Package, Plus, ClipboardList, LayoutGrid } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Medicine } from '@/lib/types';
 import DataTable, { Column } from '@/components/DataTable';
@@ -13,8 +13,10 @@ import { exportToCSV, formatDateTimeForCSV } from '@/lib/exportCSV';
 import { useRouter } from 'next/navigation';
 import ImageModal from '@/components/ImageModal';
 import Image from 'next/image';
+import OrdersTable from '@/components/OrdersTable';
 
-export default function MedicinesPage() {
+export default function MarketplacePage() {
+  const [activeTab, setActiveTab] = useState<'medicines' | 'orders'>('medicines');
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [filteredMedicines, setFilteredMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,8 +35,10 @@ export default function MedicinesPage() {
   const router = useRouter();
 
   useEffect(() => {
-    fetchMedicines();
-  }, []);
+    if (activeTab === 'medicines') {
+        fetchMedicines();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     filterMedicines();
@@ -235,117 +239,160 @@ export default function MedicinesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold gradient-text">Medicines & Products</h1>
-          <p className="text-gray-600 mt-1">Manage marketplace inventory</p>
+          <h1 className="text-3xl font-bold gradient-text">Marketplace Dashboard</h1>
+          <p className="text-gray-600 mt-1">Manage medicines inventory and orders</p>
         </div>
+        
+        {/* Tabs */}
+        <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
+             <button
+                suppressHydrationWarning
+                onClick={() => setActiveTab('medicines')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                    activeTab === 'medicines' 
+                    ? 'bg-white text-emerald-600 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+             >
+                <LayoutGrid className="h-4 w-4" />
+                Medicines
+             </button>
+             <button
+                suppressHydrationWarning
+                onClick={() => setActiveTab('orders')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                    activeTab === 'orders' 
+                    ? 'bg-white text-emerald-600 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+             >
+                <ClipboardList className="h-4 w-4" />
+                Orders
+             </button>
+        </div>
+
         <div className="flex gap-3">
-          <button
-            onClick={() => router.push('/dashboard/marketplace/add')}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 hover:shadow-lg transition-all"
-          >
-            <Plus className="h-5 w-5" />
-            Add Medicine
-          </button>
-          <button
-            onClick={handleExport}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-lg hover:shadow-lg transition-all"
-          >
-            <Download className="h-5 w-5" />
-            Export CSV
-          </button>
+          {activeTab === 'medicines' && (
+              <>
+                <button
+                    suppressHydrationWarning
+                    onClick={() => router.push('/dashboard/marketplace/add')}
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 hover:shadow-lg transition-all"
+                >
+                    <Plus className="h-5 w-5" />
+                    Add Medicine
+                </button>
+                <button
+                    suppressHydrationWarning
+                    onClick={handleExport}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-lg hover:shadow-lg transition-all"
+                >
+                    <Download className="h-5 w-5" />
+                    Export CSV
+                </button>
+              </>
+          )}
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="glass-card p-4 rounded-lg">
-          <p className="text-sm text-gray-600">Total Products</p>
-          <p className="text-2xl font-bold text-emerald-600">{medicines.length}</p>
-        </div>
-        <div className="glass-card p-4 rounded-lg">
-          <p className="text-sm text-gray-600">Total Value</p>
-          <p className="text-2xl font-bold text-blue-600">
-            ₹{medicines.reduce((sum, m) => sum + (m.price * m.stock_quantity), 0).toFixed(2)}
-          </p>
-        </div>
-        <div className="glass-card p-4 rounded-lg">
-          <p className="text-sm text-gray-600">Low Stock</p>
-          <p className="text-2xl font-bold text-amber-600">
-            {medicines.filter(m => m.stock_quantity > 0 && m.stock_quantity < 10).length}
-          </p>
-        </div>
-        <div className="glass-card p-4 rounded-lg">
-          <p className="text-sm text-gray-600">Out of Stock</p>
-          <p className="text-2xl font-bold text-red-600">
-            {medicines.filter(m => m.stock_quantity === 0).length}
-          </p>
-        </div>
-      </div>
+      {activeTab === 'medicines' ? (
+        <>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="glass-card p-4 rounded-lg">
+                <p className="text-sm text-gray-600">Total Products</p>
+                <p className="text-2xl font-bold text-emerald-600">{medicines.length}</p>
+                </div>
+                <div className="glass-card p-4 rounded-lg">
+                <p className="text-sm text-gray-600">Total Value</p>
+                <p className="text-2xl font-bold text-blue-600">
+                    ₹{medicines.reduce((sum, m) => sum + (m.price * m.stock_quantity), 0).toFixed(2)}
+                </p>
+                </div>
+                <div className="glass-card p-4 rounded-lg">
+                <p className="text-sm text-gray-600">Low Stock</p>
+                <p className="text-2xl font-bold text-amber-600">
+                    {medicines.filter(m => m.stock_quantity > 0 && m.stock_quantity < 10).length}
+                </p>
+                </div>
+                <div className="glass-card p-4 rounded-lg">
+                <p className="text-sm text-gray-600">Out of Stock</p>
+                <p className="text-2xl font-bold text-red-600">
+                    {medicines.filter(m => m.stock_quantity === 0).length}
+                </p>
+                </div>
+            </div>
 
-      {/* Filters */}
-      <div className="glass-card p-6 rounded-lg space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <SearchBar
-            placeholder="Search by name, manufacturer, or category..."
-            onSearch={setSearchQuery}
-            className="md:col-span-1"
-          />
-          
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-4 py-3 border-2 border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-          >
-            <option value="all">All Categories</option>
-            {categories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
+            {/* Filters */}
+            <div className="glass-card p-6 rounded-lg space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <SearchBar
+                    placeholder="Search by name, manufacturer, or category..."
+                    onSearch={setSearchQuery}
+                    className="md:col-span-1"
+                />
+                
+                <select
+                    suppressHydrationWarning
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="px-4 py-3 border-2 border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                >
+                    <option value="all">All Categories</option>
+                    {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                </select>
 
-          <select
-            value={stockFilter}
-            onChange={(e) => setStockFilter(e.target.value)}
-            className="px-4 py-3 border-2 border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-          >
-            <option value="all">All Stock Levels</option>
-            <option value="low">Low Stock (&lt; 10)</option>
-            <option value="out">Out of Stock</option>
-          </select>
-        </div>
+                <select
+                    suppressHydrationWarning
+                    value={stockFilter}
+                    onChange={(e) => setStockFilter(e.target.value)}
+                    className="px-4 py-3 border-2 border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                >
+                    <option value="all">All Stock Levels</option>
+                    <option value="low">Low Stock (&lt; 10)</option>
+                    <option value="out">Out of Stock</option>
+                </select>
+                </div>
 
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Filter className="h-4 w-4" />
-          <span>
-            Showing {filteredMedicines.length} of {medicines.length} products
-          </span>
-        </div>
-      </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Filter className="h-4 w-4" />
+                <span>
+                    Showing {filteredMedicines.length} of {medicines.length} products
+                </span>
+                </div>
+            </div>
 
-      {/* Data Table */}
-      <DataTable
-        data={paginatedMedicines}
-        columns={columns}
-        loading={loading}
-        emptyMessage="No medicines found"
-        onView={(med) => router.push(`/dashboard/marketplace/${med.id}`)}
-        onEdit={(med) => router.push(`/dashboard/marketplace/${med.id}/edit`)}
-        onDelete={(med) => {
-          setSelectedMedicine(med);
-          setDeleteDialogOpen(true);
-        }}
-        actions={true}
-      />
+            {/* Data Table */}
+            <DataTable
+                data={paginatedMedicines}
+                columns={columns}
+                loading={loading}
+                emptyMessage="No medicines found"
+                onView={(med) => router.push(`/dashboard/marketplace/${med.id}`)}
+                onEdit={(med) => router.push(`/dashboard/marketplace/${med.id}/edit`)}
+                onDelete={(med) => {
+                setSelectedMedicine(med);
+                setDeleteDialogOpen(true);
+                }}
+                actions={true}
+            />
 
-      {/* Pagination */}
-      {filteredMedicines.length > 0 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredMedicines.length}
-          itemsPerPage={itemsPerPage}
-          onPageChange={setCurrentPage}
-          onItemsPerPageChange={setItemsPerPage}
-        />
+            {/* Pagination */}
+            {filteredMedicines.length > 0 && (
+                <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredMedicines.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={setItemsPerPage}
+                />
+            )}
+        </>
+      ) : (
+          <OrdersTable />
       )}
 
       {/* Image Modal */}

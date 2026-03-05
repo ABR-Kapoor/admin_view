@@ -131,7 +131,10 @@ export default function Sidebar() {
       {/* Footer / Settings */}
       <div className="p-6">
         <nav className="space-y-1">
-          <button className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors">
+          <button 
+            suppressHydrationWarning
+            className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+          >
             <LogOut className="w-5 h-5" />
             <span className="font-medium text-sm">Log Out</span>
           </button>

@@ -113,6 +113,36 @@ export default function ClinicsPage() {
     }
   };
 
+  const handleToggleVerification = async (clinicId: string, currentStatus: boolean) => {
+    if (!clinicId) return;
+
+    // Optimistic update
+    const previousClinics = [...clinics];
+    const newStatus = !currentStatus;
+    
+    // Update local state immediately
+    setClinics(currentClinics => currentClinics.map(c => 
+      c.clinic_id === clinicId ? { ...c, is_verified: newStatus } : c
+    ));
+
+    try {
+      const response = await fetch(`/api/admin/clinics/${clinicId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_verified: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+    } catch (error) {
+      console.error('Error updating verification status:', error);
+      // Revert on error
+      setClinics(previousClinics);
+      alert('Failed to update verification status');
+    }
+  };
+
   const handleExport = () => {
     const exportData = filteredClinics.map(clinic => ({
       'Clinic ID': clinic.clinic_id,
@@ -206,7 +236,29 @@ export default function ClinicsPage() {
       key: 'is_verified',
       label: 'Status',
       render: (clinic) => (
-        <StatusBadge status={clinic.is_verified ? 'verified' : 'pending'} />
+        <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => handleToggleVerification(clinic.clinic_id, !!clinic.is_verified)}
+            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+              clinic.is_verified ? 'bg-emerald-500' : 'bg-gray-200'
+            }`}
+          >
+            <span className="sr-only">Toggle verification</span>
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                clinic.is_verified ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+            clinic.is_verified 
+              ? 'bg-emerald-100 text-emerald-700' 
+              : 'bg-yellow-100 text-yellow-700'
+          }`}>
+            {clinic.is_verified ? 'Verified' : 'Pending'}
+          </span>
+        </div>
       ),
       sortable: true
     },

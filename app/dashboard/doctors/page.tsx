@@ -88,15 +88,19 @@ export default function DoctorsPage() {
       label: 'DOCTOR',
       render: (doctor) => (
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
-             {doctor.user?.profile_image_url ? (
-               <img src={doctor.user.profile_image_url} alt={doctor.user.name} className="w-full h-full object-cover" />
-             ) : (
-                <div className="w-full h-full flex items-center justify-center bg-emerald-100 text-emerald-600 font-bold">
-                  {doctor.user?.name?.[0] || 'D'}
-                </div>
-             )}
-          </div>
+          <ProfileImage 
+            imageUrl={doctor.user?.profile_image_url}
+            name={doctor.user?.name || 'Doctor'}
+            size="md"
+            onClick={() => {
+              if (doctor.user?.profile_image_url) {
+                setSelectedImage({
+                  url: doctor.user.profile_image_url,
+                  name: doctor.user.name || 'Doctor'
+                });
+              }
+            }}
+          />
           <div>
             <p className="font-bold text-gray-900 leading-tight">{doctor.user?.name || 'Unknown'}</p>
             <p className="text-xs text-gray-400">{doctor.user?.email}</p>
@@ -240,6 +244,15 @@ export default function DoctorsPage() {
              </button>
            ))}
         </div>
+      )}
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <ImageModal
+          imageUrl={selectedImage.url}
+          name={selectedImage.name}
+          onClose={() => setSelectedImage(null)}
+        />
       )}
     </div>
   );

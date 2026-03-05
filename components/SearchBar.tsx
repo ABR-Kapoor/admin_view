@@ -30,6 +30,7 @@ export default function SearchBar({
     <div className={`relative ${className}`}>
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-emerald-500" />
       <input
+        suppressHydrationWarning
         type="text"
         placeholder={placeholder}
         value={query}

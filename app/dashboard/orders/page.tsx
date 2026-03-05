@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Download, Filter, Package } from 'lucide-react';
-import { Order } from '@/lib/types';
+import { Download, Filter, Package, Truck, UserPlus } from 'lucide-react';
+import { Order, DeliveryAgent } from '@/lib/types';
 import DataTable, { Column } from '@/components/DataTable';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
@@ -23,11 +23,18 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [selectedImage, setSelectedImage] = useState<{ url: string; name: string } | null>(null);
+  
+  // Assignment
+  const [agents, setAgents] = useState<DeliveryAgent[]>([]);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedOrderForAssignment, setSelectedOrderForAssignment] = useState<Order | null>(null);
+  const [selectedAgentId, setSelectedAgentId] = useState<string>('');
 
   const router = useRouter();
 
   useEffect(() => {
     fetchOrders();
+    fetchAgents();
   }, []);
 
   useEffect(() => {
@@ -52,6 +59,46 @@ export default function OrdersPage() {
       setOrders([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAgents = async () => {
+    try {
+      const response = await fetch('/api/admin/delivery-agents');
+      const result = await response.json();
+      if (result.data) {
+        setAgents(result.data.filter((a: DeliveryAgent) => a.is_active));
+      }
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+    }
+  };
+
+  const handleAssign = async () => {
+    if (!selectedOrderForAssignment || !selectedAgentId) return;
+
+    try {
+      const response = await fetch('/api/admin/orders/assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: selectedOrderForAssignment.id,
+          deliveryAgentId: selectedAgentId
+        })
+      });
+
+      if (response.ok) {
+        // Refresh orders
+        fetchOrders();
+        setAssignModalOpen(false);
+        setSelectedOrderForAssignment(null);
+        setSelectedAgentId('');
+      } else {
+        alert('Failed to assign order');
+      }
+    } catch (error) {
+      console.error('Error assigning order:', error);
+      alert('Error assigning order');
     }
   };
 
@@ -180,6 +227,33 @@ export default function OrdersPage() {
         </p>
       ),
       sortable: true
+    },
+    {
+      key: 'delivery_agent',
+      label: 'Delivery Agent',
+      render: (order) => (
+        <div className="flex items-center gap-2">
+          {order.delivery_agent ? (
+             <div className="flex items-center gap-2">
+                <ProfileImage imageUrl={order.delivery_agent.profile_image_url} name={order.delivery_agent.name} size="sm" />
+                <span className="text-sm font-medium">{order.delivery_agent.name}</span>
+             </div>
+          ) : (
+             <button 
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedOrderForAssignment(order);
+                    setAssignModalOpen(true);
+                }}
+                className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-md text-xs font-medium hover:bg-blue-100 transition-colors"
+             >
+                <UserPlus className="w-3 h-3" />
+                Assign
+             </button>
+          )}
+        </div>
+      ),
+      sortable: false
     }
   ];
 
@@ -285,6 +359,60 @@ export default function OrdersPage() {
           name={selectedImage.name}
           onClose={() => setSelectedImage(null)}
         />
+      )}
+      {/* Assignment Modal */}
+      {assignModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl animate-in zoom-in-95 duration-200">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Assign Delivery Agent</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Select a delivery agent for Order #{selectedOrderForAssignment?.id.substring(0, 8)}
+            </p>
+            
+            <div className="space-y-3 mb-6 max-h-[300px] overflow-y-auto">
+              {agents.map((agent) => (
+                <div 
+                  key={agent.id}
+                  onClick={() => setSelectedAgentId(agent.id)}
+                  className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
+                    selectedAgentId === agent.id 
+                      ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' 
+                      : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <ProfileImage imageUrl={agent.profile_image_url} name={agent.name} size="sm" />
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">{agent.name}</p>
+                      <p className="text-xs text-gray-500">{agent.email}</p>
+                    </div>
+                  </div>
+                  {selectedAgentId === agent.id && <div className="w-4 h-4 rounded-full bg-blue-500" />}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => {
+                  setAssignModalOpen(false);
+                  setSelectedOrderForAssignment(null);
+                  setSelectedAgentId('');
+                }}
+                className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleAssign}
+                disabled={!selectedAgentId}
+                className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Confirm Assignment
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

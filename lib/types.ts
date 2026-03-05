@@ -254,6 +254,8 @@ export interface Order {
   shipping_address?: any; // JSONB
   created_at: string;
   user?: User;
+  assigned_to_delivery_boy_id?: string;
+  delivery_agent?: DeliveryAgent;
 }
 
 export interface OrderItem {
