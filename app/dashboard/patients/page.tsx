@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Download, Filter, Users } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { Patient } from '@/lib/types';
 import DataTable, { Column } from '@/components/DataTable';
 import SearchBar from '@/components/SearchBar';
@@ -27,7 +26,6 @@ export default function PatientsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
 
-  const supabase = createClient();
   const router = useRouter();
 
   useEffect(() => {
@@ -92,12 +90,14 @@ export default function PatientsPage() {
     if (!selectedPatient) return;
 
     try {
-      const { error } = await supabase
-        .from('patients')
-        .delete()
-        .eq('pid', selectedPatient.pid);
+      const response = await fetch(`/api/admin/patients/${selectedPatient.pid}`, {
+        method: 'DELETE',
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete patient');
+      }
 
       setPatients(patients.filter(p => p.pid !== selectedPatient.pid));
       setDeleteDialogOpen(false);

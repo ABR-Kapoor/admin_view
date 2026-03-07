@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Calendar, Download, Filter, Plus } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { Appointment } from '@/lib/types';
 import DataTable, { Column } from '@/components/DataTable';
 import SearchBar from '@/components/SearchBar';
@@ -25,8 +24,6 @@ export default function AppointmentsPage() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
-
-  const supabase = createClient();
 
   useEffect(() => {
     fetchAppointments();

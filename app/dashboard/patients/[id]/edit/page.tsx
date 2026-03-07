@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -31,25 +30,18 @@ export default function EditPatientPage() {
     uid: '',
   });
 
-  const supabase = createClient();
-
   useEffect(() => {
     fetchPatient();
   }, [pid]);
 
   async function fetchPatient() {
     try {
-      const { data, error } = await supabase
-        .from('patients')
-        .select(`
-          *,
-          user:users(uid, name, email, phone)
-        `)
-        .eq('pid', pid)
-        .single();
+      const response = await fetch(`/api/admin/patients/${pid}`);
+      const result = await response.json();
 
-      if (error) throw error;
+      if (!response.ok) throw new Error(result.error || 'Failed to fetch patient');
 
+      const data = result.data;
       setFormData({
         name: data.user?.name || '',
         email: data.user?.email || '',
@@ -79,36 +71,33 @@ export default function EditPatientPage() {
     setSaving(true);
 
     try {
-      // Update user table
-      const { error: userError } = await supabase
-        .from('users')
-        .update({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
+      const response = await fetch(`/api/admin/patients/${pid}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user: {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+          },
+          patient: {
+            date_of_birth: formData.date_of_birth || null,
+            gender: formData.gender || null,
+            blood_group: formData.blood_group || null,
+            address_line1: formData.address_line1 || null,
+            address_line2: formData.address_line2 || null,
+            city: formData.city || null,
+            state: formData.state || null,
+            postal_code: formData.postal_code || null,
+            emergency_contact_name: formData.emergency_contact_name || null,
+            emergency_contact_phone: formData.emergency_contact_phone || null,
+          }
         })
-        .eq('uid', formData.uid);
+      });
 
-      if (userError) throw userError;
+      const result = await response.json();
 
-      // Update patient table
-      const { error: patientError } = await supabase
-        .from('patients')
-        .update({
-          date_of_birth: formData.date_of_birth || null,
-          gender: formData.gender || null,
-          blood_group: formData.blood_group || null,
-          address_line1: formData.address_line1 || null,
-          address_line2: formData.address_line2 || null,
-          city: formData.city || null,
-          state: formData.state || null,
-          postal_code: formData.postal_code || null,
-          emergency_contact_name: formData.emergency_contact_name || null,
-          emergency_contact_phone: formData.emergency_contact_phone || null,
-        })
-        .eq('pid', pid);
-
-      if (patientError) throw patientError;
+      if (!response.ok) throw new Error(result.error || 'Failed to update patient');
 
       toast.success('Patient updated successfully!');
       router.push('/dashboard/patients');

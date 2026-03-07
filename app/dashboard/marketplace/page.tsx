@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Download, Filter, Package, Plus, ClipboardList, LayoutGrid } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { Medicine } from '@/lib/types';
 import DataTable, { Column } from '@/components/DataTable';
 import SearchBar from '@/components/SearchBar';
@@ -31,7 +30,6 @@ export default function MarketplacePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
 
-  const supabase = createClient();
   const router = useRouter();
 
   useEffect(() => {
@@ -47,13 +45,11 @@ export default function MarketplacePage() {
   const fetchMedicines = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('medicines')
-        .select('*')
-        .order('name', { ascending: true });
+      const response = await fetch('/api/admin/medicines');
+      const result = await response.json();
 
-      if (error) throw error;
-      setMedicines(data || []);
+      if (!response.ok) throw new Error(result.error || 'Failed to fetch medicines');
+      setMedicines(result.data || []);
     } catch (error) {
       console.error('Error fetching medicines:', error);
     } finally {
@@ -98,12 +94,14 @@ export default function MarketplacePage() {
     if (!selectedMedicine) return;
 
     try {
-      const { error } = await supabase
-        .from('medicines')
-        .delete()
-        .eq('id', selectedMedicine.id);
+      const response = await fetch(`/api/admin/medicines/${selectedMedicine.id}`, {
+        method: 'DELETE',
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to delete');
+      }
 
       setMedicines(medicines.filter(m => m.id !== selectedMedicine.id));
       setDeleteDialogOpen(false);
@@ -202,7 +200,7 @@ export default function MarketplacePage() {
       key: 'price',
       label: 'Price',
       render: (med) => (
-        <p className="font-semibold text-emerald-600">₹{med.price.toFixed(2)}</p>
+        <p className="font-semibold text-emerald-600">₹{(typeof med.price === 'number' ? med.price : parseFloat(med.price || '0')).toFixed(2)}</p>
       ),
       sortable: true
     },

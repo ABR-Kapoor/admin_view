@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Download, Filter, FileText } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { Prescription } from '@/lib/types';
 import DataTable, { Column } from '@/components/DataTable';
 import SearchBar from '@/components/SearchBar';
@@ -22,7 +21,6 @@ export default function PrescriptionsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
 
-  const supabase = createClient();
 
   useEffect(() => {
     fetchPrescriptions();

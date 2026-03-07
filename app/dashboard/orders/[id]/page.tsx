@@ -4,7 +4,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Package, User, MapPin, CreditCard, Clock, Truck, CheckCircle, XCircle } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { Order, OrderItem } from '@/lib/types';
 import StatusBadge from '@/components/StatusBadge';
 import Image from 'next/image';
@@ -16,8 +15,7 @@ interface OrderDetails extends Order {
 export default function OrderDetailsPage() {
   const router = useRouter();
   const params = useParams();
-  const supabase = createClient();
-  
+
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -31,32 +29,13 @@ export default function OrderDetailsPage() {
     try {
       setLoading(true);
       
-      // Fetch order with user details
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          user:users(name, email, phone, profile_image_url)
-        `)
-        .eq('id', params.id)
-        .single();
-        
-      if (orderError) throw orderError;
+      const response = await fetch(`/api/admin/orders/${params.id}`);
+      const result = await response.json();
 
-      // Fetch order items with medicine details
-      const { data: itemsData, error: itemsError } = await supabase
-        .from('order_items')
-        .select(`
-          *,
-          medicines(name, image_url)
-        `)
-        .eq('order_id', params.id);
-        
-      if (itemsError) throw itemsError;
+      if (!response.ok) throw new Error(result.error || 'Failed to fetch order');
 
-      const fullOrder = { ...orderData, items: itemsData } as OrderDetails;
-      setOrder(fullOrder);
-      setStatus(fullOrder.status);
+      setOrder(result.data);
+      setStatus(result.data.status);
 
     } catch (error) {
       console.error('Error fetching order details:', error);
@@ -69,12 +48,15 @@ export default function OrderDetailsPage() {
   const handleStatusUpdate = async (newStatus: string) => {
     try {
       setUpdating(true);
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: newStatus })
-        .eq('id', params.id);
+      const response = await fetch(`/api/admin/orders/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) throw new Error(result.error || 'Failed to update status');
       
       setStatus(newStatus);
       setOrder(prev => prev ? { ...prev, status: newStatus as OrderDetails['status'] } : null);

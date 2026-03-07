@@ -4,14 +4,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { Medicine } from '@/lib/types';
 import MedicineForm from '@/components/MedicineForm';
 
 export default function EditMedicinePage() {
   const router = useRouter();
   const params = useParams();
-  const supabase = createClient();
   
   const [medicine, setMedicine] = useState<Medicine | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,14 +21,13 @@ export default function EditMedicinePage() {
 
   const fetchMedicine = async () => {
     try {
-      const { data, error } = await supabase
-        .from('medicines')
-        .select('*')
-        .eq('id', params.id)
-        .single();
-
-      if (error) throw error;
-      setMedicine(data);
+      const response = await fetch(`/api/admin/medicines/${params.id}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch medicine');
+      }
+      const data = await response.json();
+      setMedicine(data.data);
     } catch (error) {
       console.error('Error fetching medicine:', error);
       router.push('/dashboard/marketplace');
@@ -43,18 +40,22 @@ export default function EditMedicinePage() {
     try {
       setIsSubmitting(true);
       
-      const { error } = await supabase
-        .from('medicines')
-        .update(data)
-        .eq('id', params.id);
+      const response = await fetch(`/api/admin/medicines/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update medicine');
+      }
 
       router.push('/dashboard/marketplace');
       router.refresh();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating medicine:', error);
-      alert('Failed to update medicine');
+      alert(error.message || 'Failed to update medicine');
     } finally {
       setIsSubmitting(false);
     }

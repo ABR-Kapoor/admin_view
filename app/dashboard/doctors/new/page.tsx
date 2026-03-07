@@ -1,8 +1,8 @@
+
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabaseAdmin } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -27,34 +27,19 @@ export default function NewDoctorPage() {
     setLoading(true);
 
     try {
-      // Create user first
-      const { data: user, error: userError } = await supabaseAdmin
-        .from('users')
-        .insert({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          role: 'doctor',
-        })
-        .select()
-        .single();
+      const response = await fetch('/api/admin/doctors', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-      if (userError) throw userError;
+      const result = await response.json();
 
-      // Create doctor profile
-      const { error: doctorError } = await supabaseAdmin
-        .from('doctors')
-        .insert({
-          uid: user.uid,
-          specialization: formData.specialization,
-          experience_years: parseInt(formData.experience_years),
-          qualification: formData.qualification,
-          registration_number: formData.registration_number,
-          consultation_fee: parseFloat(formData.consultation_fee),
-          bio: formData.bio,
-        });
-
-      if (doctorError) throw doctorError;
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create doctor');
+      }
 
       toast.success('Doctor created successfully!');
       router.push('/dashboard/doctors');

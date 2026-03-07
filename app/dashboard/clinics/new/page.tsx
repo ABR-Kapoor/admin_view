@@ -1,8 +1,8 @@
+
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabaseAdmin } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -26,11 +26,19 @@ export default function NewClinicPage() {
     setLoading(true);
 
     try {
-      const { error } = await supabaseAdmin
-        .from('clinics')
-        .insert(formData);
+      const response = await fetch('/api/admin/clinics', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create clinic');
+      }
 
       toast.success('Clinic created successfully!');
       router.push('/dashboard/clinics');

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Download, Filter, Building2 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { Clinic } from '@/lib/types';
 import DataTable, { Column } from '@/components/DataTable';
 import SearchBar from '@/components/SearchBar';
@@ -28,7 +27,6 @@ export default function ClinicsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
 
-  const supabase = createClient();
   const router = useRouter();
 
   useEffect(() => {
@@ -97,12 +95,14 @@ export default function ClinicsPage() {
     if (!selectedClinic) return;
 
     try {
-      const { error } = await supabase
-        .from('clinics')
-        .delete()
-        .eq('clinic_id', selectedClinic.clinic_id);
+      const response = await fetch(`/api/admin/clinics/${selectedClinic.clinic_id}`, {
+        method: 'DELETE',
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to delete clinic');
+      }
 
       setClinics(clinics.filter(c => c.clinic_id !== selectedClinic.clinic_id));
       setDeleteDialogOpen(false);

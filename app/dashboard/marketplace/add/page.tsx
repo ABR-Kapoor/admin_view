@@ -4,30 +4,33 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { Medicine } from '@/lib/types';
 import MedicineForm from '@/components/MedicineForm';
 
 export default function AddMedicinePage() {
   const router = useRouter();
-  const supabase = createClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (data: Partial<Medicine>) => {
     try {
       setIsSubmitting(true);
       
-      const { error } = await supabase
-        .from('medicines')
-        .insert([data]);
+      const response = await fetch('/api/admin/medicines', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create medicine');
+      }
 
       router.push('/dashboard/marketplace');
       router.refresh();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating medicine:', error);
-      alert('Failed to create medicine');
+      alert(error.message || 'Failed to create medicine');
     } finally {
       setIsSubmitting(false);
     }

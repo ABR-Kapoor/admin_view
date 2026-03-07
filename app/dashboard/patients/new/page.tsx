@@ -1,8 +1,8 @@
+
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabaseAdmin } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -26,31 +26,19 @@ export default function NewPatientPage() {
     setLoading(true);
 
     try {
-      const { data: user, error: userError } = await supabaseAdmin
-        .from('users')
-        .insert({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          role: 'patient',
-        })
-        .select()
-        .single();
+      const response = await fetch('/api/admin/patients', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-      if (userError) throw userError;
+      const result = await response.json();
 
-      const { error: patientError } = await supabaseAdmin
-        .from('patients')
-        .insert({
-          uid: user.uid,
-          date_of_birth: formData.date_of_birth || null,
-          gender: formData.gender || null,
-          blood_group: formData.blood_group || null,
-          address: formData.address || null,
-          emergency_contact: formData.emergency_contact || null,
-        });
-
-      if (patientError) throw patientError;
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create patient');
+      }
 
       toast.success('Patient created successfully!');
       router.push('/dashboard/patients');

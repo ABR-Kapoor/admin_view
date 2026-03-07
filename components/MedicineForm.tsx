@@ -43,7 +43,7 @@ export default function MedicineForm({
     const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? parseFloat(value) : value
+      [name]: type === 'number' ? (value === '' ? 0 : parseFloat(value)) : value
     }));
   };
 

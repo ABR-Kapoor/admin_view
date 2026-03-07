@@ -1,27 +1,22 @@
 
-import { createClient } from './supabase/client';
-
-export async function uploadImage(file: File, bucket: string = 'medicines'): Promise<string | null> {
-    const supabase = createClient();
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
-
+export async function uploadImage(file: File, bucket: string = 'default'): Promise<string | null> {
     try {
-        const { error: uploadError } = await supabase.storage
-            .from(bucket)
-            .upload(filePath, file);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('bucket', bucket);
 
-        if (uploadError) {
-            console.error('Error uploading image:', uploadError);
-            return null;
+        const response = await fetch('/api/admin/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const result = await response.json();
+            throw new Error(result.error || 'Failed to upload image');
         }
 
-        const { data } = supabase.storage
-            .from(bucket)
-            .getPublicUrl(filePath);
-
-        return data.publicUrl;
+        const data = await response.json();
+        return data.url;
     } catch (error) {
         console.error('Error in uploadImage:', error);
         return null;

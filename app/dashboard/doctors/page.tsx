@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Download, Search, Filter } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { Doctor } from '@/lib/types';
 import DataTable, { Column } from '@/components/DataTable';
 import ProfileImage from '@/components/ProfileImage';
@@ -22,7 +21,6 @@ export default function DoctorsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const supabase = createClient();
   const router = useRouter();
 
   useEffect(() => {
